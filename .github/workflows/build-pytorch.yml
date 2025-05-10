@@ -14,20 +14,33 @@ jobs:
         python_version: [ 3.11, 3.12 ]
     name: Build PyTorch for Python ${{ matrix.python_version }}
     steps:
-      - name: Install dependencies and Clone PyTorch repo
+      - name: Restore PyTorch source from cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: pytorch
+          key: ${{ runner.os }}-pytorch-${{ env.VERSION }}
+
+      - name: Clone PyTorch repo
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
-          brew install ninja libomp pkg-config libuv
-          
-          TARGET_TAG=v$VERSION
-          echo "TARGET_TAG=$TARGET_TAG" >> $GITHUB_ENV
-          
-          git clone --depth 1 --branch "$TARGET_TAG" --recursive https://github.com/pytorch/pytorch.git pytorch
-          cd pytorch
-          git submodule update --init --recursive --depth 1 || git submodule update --init --recursive --depth 10 || git submodule update --init --recursive
+          git clone --depth 1 --branch "v$VERSION" --recursive https://github.com/pytorch/pytorch.git pytorch
+          git -C pytorch submodule update --init --recursive --depth 1 || git -C pytorch submodule update --init --recursive --depth 10 || git -C pytorch submodule update --init --recursive
+
+      - name: Save PyTorch source to cache
+        id: cache-save
+        if: steps.restore-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: pytorch
+          key: ${{ runner.os }}-pytorch-${{ env.VERSION }}
+          retention-days: 30
 
       - name: Build wheel
         run: |
           set -e
+          
+          brew install ninja libomp pkg-config libuv
           
           sudo xcode-select --switch /Applications/Xcode_14.1.app
           
@@ -60,7 +73,7 @@ jobs:
           export CMAKE_PREFIX_PATH="$(realpath venv/lib):$CMAKE_PREFIX_PATH"
           export CMAKE_INCLUDE_PATH="$(realpath venv/include):$CMAKE_INCLUDE_PATH"
 
-          echo "➡️ Building PyTorch $TARGET_TAG with Python ${{ matrix.python_version }}"
+          echo "➡️ Building PyTorch v$VERSION with Python ${{ matrix.python_version }}"
 
           cd pytorch
           git clean -xfd
