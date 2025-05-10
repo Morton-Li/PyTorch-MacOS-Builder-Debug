@@ -1,0 +1,106 @@
+name: Build PyTorch
+
+on:
+  workflow_dispatch:  # 手动触发
+
+env:
+  VERSION: "2.3.0"
+
+jobs:
+  build:
+    runs-on: macos-13
+    strategy:
+      matrix:
+        python_version: [ 3.11, 3.12 ]
+    name: Build PyTorch for Python ${{ matrix.python_version }}
+    steps:
+      - name: Install dependencies and Clone PyTorch repo
+        run: |
+          brew install ninja libomp pkg-config libuv
+          
+          TARGET_TAG=v$VERSION
+          echo "TARGET_TAG=$TARGET_TAG" >> $GITHUB_ENV
+          
+          git clone --depth 1 --branch "$TARGET_TAG" --recursive https://github.com/pytorch/pytorch.git pytorch
+          cd pytorch
+          git submodule update --init --recursive --depth 1 || git submodule update --init --recursive --depth 10 || git submodule update --init --recursive
+
+      - name: Build wheel
+        run: |
+          set -e
+          
+          sudo xcode-select --switch /Applications/Xcode_14.1.app
+          
+          export USE_CUDA=0
+          export USE_MPS=0
+          export USE_ROCM=0
+          export USE_DISTRIBUTED=1
+          export BLAS="MKL"
+          export USE_MKLDNN=1
+          export USE_OPENMP=1
+          export PYTORCH_BUILD_VERSION=${VERSION}
+          export PYTORCH_BUILD_NUMBER=1
+          export MAX_JOBS=$(sysctl -n hw.logicalcpu)
+          if [ "$MAX_JOBS" -gt 4 ]; then
+              export MAX_JOBS=4
+          fi
+
+          export CFLAGS="-I/usr/local/opt/libomp/include"
+          export CC="/Applications/Xcode_14.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+          
+          mkdir -p wheels
+          
+          python${{ matrix.python_version }} -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          pip install -r pytorch/requirements.txt
+          pip install --force-reinstall cmake==3.25.2 numpy==1.26.4
+          pip install mkl-static mkl-include
+          
+          export CMAKE_PREFIX_PATH="$(realpath venv/lib):$CMAKE_PREFIX_PATH"
+          export CMAKE_INCLUDE_PATH="$(realpath venv/include):$CMAKE_INCLUDE_PATH"
+
+          echo "➡️ Building PyTorch $TARGET_TAG with Python ${{ matrix.python_version }}"
+
+          cd pytorch
+          git clean -xfd
+
+          python setup.py bdist_wheel
+
+          cp dist/*.whl ../wheels/
+          cd ..
+          
+          if [ "$(ls wheels/*.whl 2>/dev/null | wc -l)" -eq 0 ]; then
+            echo "❌ No wheel built. Tag will not be created."
+            exit 1
+          fi
+
+      - name: Upload wheels as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: torch-${{ env.VERSION }}-py${{ matrix.python_version }}-macosx-wheel
+          path: wheels/*.whl
+
+  release:
+    needs: [build]
+    runs-on: macos-13
+    name: Create release and upload wheels
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: wheels
+          merge-multiple: true
+
+      - name: List wheels
+        run: |
+          ls -R wheels
+
+      - name: Create release and upload wheels
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: "PyTorch ${{ env.VERSION }} Release"
+          files: wheels/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

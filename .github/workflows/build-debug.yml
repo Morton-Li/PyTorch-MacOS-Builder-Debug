@@ -1,0 +1,36 @@
+name: Build Debug
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'PyTorch tag version (e.g., v2.3.0)'
+        required: true
+        default: ''
+      run-on:
+        description: 'Run on which OS?'
+        required: true
+        default: 'macos-13'
+
+jobs:
+  debug_session:
+    runs-on: ${{ github.event.inputs.run-on }}
+    steps:
+      - name: Install dependencies and Clone PyTorch repo
+        run: |
+          echo "🎯 Using manually provided tag: ${{ github.event.inputs.tag }}"
+          TARGET_TAG="${{ github.event.inputs.tag }}"
+          VERSION=${TARGET_TAG#v}
+          if ! [[ "$TARGET_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid tag format: $TARGET_TAG"
+            exit 1
+          fi
+          echo "TARGET_TAG=$TARGET_TAG" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          git clone --depth 1 --branch "$TARGET_TAG" --recursive https://github.com/pytorch/pytorch.git pytorch
+          cd pytorch
+          git submodule update --init --recursive --depth 1 || git submodule update --init --recursive --depth 10 || git submodule update --init --recursive
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
