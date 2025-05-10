@@ -37,7 +37,7 @@ jobs:
           export USE_DISTRIBUTED=1
           export BLAS="MKL"
           export USE_MKLDNN=1
-          export USE_OPENMP=1
+          # export USE_OPENMP=1
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
           export MAX_JOBS=$(sysctl -n hw.logicalcpu)
