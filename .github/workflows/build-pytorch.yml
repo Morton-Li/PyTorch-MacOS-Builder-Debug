@@ -19,12 +19,12 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: pytorch
-          key: ${{ runner.os }}-pytorch-${{ env.VERSION }}
+          key: pytorch-${{ env.VERSION }}
 
       - name: Clone PyTorch repo
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
-          git clone --depth 1 --branch "v$VERSION" --recursive https://github.com/pytorch/pytorch.git pytorch
+          git clone --depth 1 --branch "v${{ env.VERSION }}" --recursive https://github.com/pytorch/pytorch.git pytorch
           git -C pytorch submodule update --init --recursive --depth 1 || git -C pytorch submodule update --init --recursive --depth 10 || git -C pytorch submodule update --init --recursive
 
       - name: Save PyTorch source to cache
@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: pytorch
-          key: ${{ runner.os }}-pytorch-${{ env.VERSION }}
+          key: pytorch-${{ env.VERSION }}
           retention-days: 30
 
       - name: Build wheel

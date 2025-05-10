@@ -3,8 +3,8 @@ name: Build Debug
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'PyTorch tag version (e.g., v2.3.0)'
+      version:
+        description: 'PyTorch version (e.g., 2.3.0)'
         required: true
         default: ''
       run-on:
@@ -16,21 +16,30 @@ jobs:
   debug_session:
     runs-on: ${{ github.event.inputs.run-on }}
     steps:
-      - name: Install dependencies and Clone PyTorch repo
-        run: |
-          echo "🎯 Using manually provided tag: ${{ github.event.inputs.tag }}"
-          TARGET_TAG="${{ github.event.inputs.tag }}"
-          VERSION=${TARGET_TAG#v}
-          if ! [[ "$TARGET_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Invalid tag format: $TARGET_TAG"
-            exit 1
-          fi
-          echo "TARGET_TAG=$TARGET_TAG" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Restore PyTorch source from cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: pytorch
+          key: pytorch-${{ github.event.inputs.version }}
 
-          git clone --depth 1 --branch "$TARGET_TAG" --recursive https://github.com/pytorch/pytorch.git pytorch
+      - name: Clone PyTorch repo
+        if: steps.restore-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "🎯 Using manually provided tag: v${{ github.event.inputs.version }}"
+
+          git clone --depth 1 --branch "v${{ github.event.inputs.version }}" --recursive https://github.com/pytorch/pytorch.git pytorch
           cd pytorch
           git submodule update --init --recursive --depth 1 || git submodule update --init --recursive --depth 10 || git submodule update --init --recursive
+
+      - name: Save PyTorch source to cache
+        id: cache-save
+        if: steps.restore-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: pytorch
+          key: pytorch-${{ github.event.inputs.version }}
+          retention-days: 30
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
