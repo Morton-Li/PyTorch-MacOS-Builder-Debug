@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # 手动触发
 
 env:
-  VERSION: "2.3.0"
+  VERSION: "2.7.0"
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
         with:
           path: pytorch
           key: pytorch-${{ env.VERSION }}
-          retention-days: 30
+          retention-days: 7
 
       - name: Build wheel
         run: |
@@ -50,7 +50,7 @@ jobs:
           export USE_DISTRIBUTED=1
           export BLAS="MKL"
           export USE_MKLDNN=1
-          export USE_OPENMP=0
+          export USE_OPENMP=1
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
           export MAX_JOBS=$(sysctl -n hw.logicalcpu)
