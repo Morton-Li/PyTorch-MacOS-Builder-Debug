@@ -39,27 +39,31 @@ jobs:
         run: |
           set -e
           
-          # brew install ninja libomp pkg-config libuv
-          brew install ninja
+          brew install ninja pkg-config libuv
           
-          sudo xcode-select --switch /Applications/Xcode_14.1.app
+          sudo xcode-select --switch /Applications/Xcode_14.3.app
           
-          export USE_CUDA=0
-          export USE_MPS=0
-          export USE_ROCM=0
-          #export USE_DISTRIBUTED=1
-          #export BLAS="MKL"
-          #export USE_MKLDNN=1
-          #export USE_OPENMP=1
+          export USE_CUDA=OFF
+          export USE_CUDNN=OFF
+          export USE_CUSPARSELT=OFF
+          export USE_MPS=OFF
+          export USE_ROCM=OFF
+          export USE_ROCM_KERNEL_ASSERT=OFF
+          export USE_NNPACK=ON
+          export USE_MPI=OFF
+          export USE_DISTRIBUTED=ON
+          export USE_MKLDNN=OFF
+          
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
+          export CMAKE_OSX_ARCHITECTURES="x86_64"
+          
           export MAX_JOBS=$(sysctl -n hw.logicalcpu)
           if [ "$MAX_JOBS" -gt 4 ]; then
               export MAX_JOBS=4
           fi
 
-          #export CFLAGS="-I/usr/local/opt/libomp/include"
-          export CC="/Applications/Xcode_14.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+          export CC="/Applications/Xcode_14.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
           
           mkdir -p wheels
           
@@ -68,7 +72,6 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install -r pytorch/requirements.txt
           pip install --force-reinstall cmake==3.25.2 numpy==1.26.4
-          #pip install mkl-static==2022.2.0 mkl-include==2022.2.0
           
           export CMAKE_PREFIX_PATH="$(realpath venv/lib):$CMAKE_PREFIX_PATH"
           export CMAKE_INCLUDE_PATH="$(realpath venv/include):$CMAKE_INCLUDE_PATH"
