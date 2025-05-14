@@ -53,14 +53,16 @@ jobs:
           export USE_MPI=OFF
           export USE_DISTRIBUTED=ON
           export USE_MKLDNN=OFF
+          export USE_OPENMP=ON
           
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
-          # export CMAKE_OSX_ARCHITECTURES="x86_64"
+          export CMAKE_OSX_ARCHITECTURES="x86_64"
           
-          # export LDFLAGS="-arch x86_64"
+          export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+          export LDSHARED="clang -bundle -undefined dynamic_lookup -isysroot $SDKROOT -arch x86_64"
           
-          # export MACOSX_DEPLOYMENT_TARGET=11.0
+          export MACOSX_DEPLOYMENT_TARGET=11.0
           
           export MAX_JOBS=$(sysctl -n hw.logicalcpu)
           if [ "$MAX_JOBS" -gt 4 ]; then
@@ -68,6 +70,7 @@ jobs:
           fi
 
           export CC="/Applications/Xcode_14.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+          export CXX="/Applications/Xcode_14.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
           
           mkdir -p wheels
           
@@ -76,16 +79,20 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install -r pytorch/requirements.txt
           pip install --force-reinstall cmake==3.25.2 numpy==1.26.4
+          pip install mkl-static==2022.2.0 mkl-include==2022.2.0
+
+          export CMAKE_PREFIX_PATH="$(realpath venv/lib)"
+          export CMAKE_INCLUDE_PATH="$(realpath venv/include)"
           
-          export CMAKE_PREFIX_PATH="$(realpath venv/lib):$CMAKE_PREFIX_PATH"
-          export CMAKE_INCLUDE_PATH="$(realpath venv/include):$CMAKE_INCLUDE_PATH"
+          # 补充 OpenMP 头文件
+          wget -O /Applications/Xcode_14.3.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.3/include/omp.h https://github.com/intel/llvm/raw/refs/heads/sycl/openmp/runtime/src/include/omp.h.var
 
           echo "➡️ Building PyTorch v$VERSION with Python ${{ matrix.python_version }}"
 
           cd pytorch
           git clean -xfd
 
-          python setup.py bdist_wheel
+          python setup.py bdist_wheel --plat-name=macosx_11_0_$CMAKE_OSX_ARCHITECTURES
 
           cp dist/*.whl ../wheels/
           cd ..
