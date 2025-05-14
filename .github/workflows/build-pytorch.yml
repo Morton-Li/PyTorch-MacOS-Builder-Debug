@@ -56,11 +56,11 @@ jobs:
           
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
-          export CMAKE_OSX_ARCHITECTURES="x86_64"
+          # export CMAKE_OSX_ARCHITECTURES="x86_64"
           
-          export LDFLAGS="-arch x86_64"
+          # export LDFLAGS="-arch x86_64"
           
-          export MACOSX_DEPLOYMENT_TARGET=11.0
+          # export MACOSX_DEPLOYMENT_TARGET=11.0
           
           export MAX_JOBS=$(sysctl -n hw.logicalcpu)
           if [ "$MAX_JOBS" -gt 4 ]; then
