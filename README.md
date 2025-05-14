@@ -40,6 +40,20 @@ Starting from version 2.3, PyTorch has dropped support for Intel-based macOS. Th
 
 ---
 
+## ⚙️ 构建特性 Build Features
+
+本项目构建的 PyTorch 安装包具有以下特性：
+
+* ✅ 使用 **Intel MKL** 作为 BLAS 后端，提供更高的数值计算性能
+* ✅ 启用 **OpenMP** 并行支持，充分利用多核 CPU 加速张量运算
+
+The PyTorch wheels built by this project have the following features:
+
+* ✅ **Intel MKL** as the BLAS backend for high-performance numerical operations
+* ✅ **OpenMP** support enabled to accelerate tensor computations on multi-core CPUs
+
+---
+
 ## 🤝 鸣谢 Acknowledgements
 
 - [PyTorch](https://github.com/pytorch/pytorch)

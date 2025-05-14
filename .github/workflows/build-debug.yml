@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'PyTorch version (e.g., 2.3.0)'
+        description: 'PyTorch version (e.g., 2.4.0)'
         required: true
         default: ''
       run-on:
@@ -39,7 +39,6 @@ jobs:
         with:
           path: pytorch
           key: pytorch-${{ github.event.inputs.version }}
-          retention-days: 30
 
       - name: Install dependencies
         run: |
