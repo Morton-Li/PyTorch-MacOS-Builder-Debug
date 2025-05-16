@@ -50,8 +50,8 @@ jobs:
           export USE_NNPACK=ON
           export USE_MPI=OFF
           export USE_DISTRIBUTED=ON
-          export USE_MKLDNN=ON
           export BLAS="MKL"
+          export USE_MKLDNN=ON
           export USE_OPENMP=ON
           export PYTORCH_BUILD_VERSION=${VERSION}
           export PYTORCH_BUILD_NUMBER=1
