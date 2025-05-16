@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # 手动触发
 
 env:
-  VERSION: "2.6.0"  # PyTorch 版本号
+  VERSION: "2.7.0"  # PyTorch 版本号
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Save PyTorch source to cache
         id: cache-save
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.restore-cache.outputs.cache-hit != 'true' && matrix.python_version == '3.12'
         uses: actions/cache/save@v4
         with:
           path: pytorch

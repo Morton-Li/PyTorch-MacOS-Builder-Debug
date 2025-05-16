@@ -3,13 +3,13 @@ name: Auto Build PyTorch
 on:
   workflow_dispatch:  # 手动触发
   schedule:
-    - cron: '0 16 * * *'  # 每天 01:00 UTC 自动执行
+    - cron: '0 18 * * *'  # 每天 18:00 UTC 自动执行
 
 jobs:
   get_latest_tag:
     runs-on: macos-13
     outputs:
-      version: ${{ steps.get_tag.outputs.VERSION }}
+      version: ${{ steps.get_tag.outputs.version }}
       skip_build: ${{ steps.get_tag.outputs.skip_build }}
     steps:
       - name: Get latest PyTorch stable tag
