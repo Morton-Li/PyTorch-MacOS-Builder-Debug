@@ -50,6 +50,7 @@ jobs:
           echo "✅ Build skipped."
 
       - name: Restore PyTorch source from cache
+        if: steps.get_tag.outputs.skip_build == 'false'
         id: restore-cache
         uses: actions/cache/restore@v4
         with:
