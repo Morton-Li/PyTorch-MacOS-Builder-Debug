@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'PyTorch version (e.g., 2.4.0)'
+        description: 'PyTorch version (e.g., 2.7.0)'
         required: true
         default: ''
       run-on:
