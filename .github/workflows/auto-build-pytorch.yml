@@ -130,7 +130,7 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r pytorch/requirements.txt
-          pip install --force-reinstall cmake==3.25.2 "numpy~=2.2.0"
+          pip install --force-reinstall cmake==3.31.6 "numpy~=2.3.2"
           pip install mkl-static==2023.2.2 mkl-include==2023.2.2
 
           export CMAKE_PREFIX_PATH="$(realpath venv/lib)"
