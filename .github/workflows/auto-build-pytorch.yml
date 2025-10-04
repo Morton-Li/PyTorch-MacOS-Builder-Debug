@@ -15,10 +15,14 @@ jobs:
       - name: Get latest PyTorch stable tag
         id: get_tag
         run: |
-          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/pytorch/pytorch/tags)
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/pytorch/pytorch/tags?per_page=100)
 
           if echo "$RESPONSE" | jq -e 'type=="array"' >/dev/null; then
             LATEST_TAG=$(echo "$RESPONSE" | jq -r '.[].name' | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+$' | sort -Vr | head -n 1)
+            if [ -z "$LATEST_TAG" ]; then
+              echo "❌ No valid tags found."
+              exit 1
+            fi
           else
             echo "❌ Unexpected response: $RESPONSE"
             exit 1
@@ -96,7 +100,6 @@ jobs:
       - name: Build wheel
         run: |
           set -e
-          brew install ninja pkg-config libuv
           sudo xcode-select --switch /Applications/Xcode_15.2.app
 
           export USE_CUDA=OFF
@@ -130,7 +133,7 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r pytorch/requirements.txt
-          pip install --force-reinstall cmake==3.31.6 "numpy~=2.3.2"
+          pip install --force-reinstall cmake==3.31.6
           pip install mkl-static==2023.2.2 mkl-include==2023.2.2
 
           export CMAKE_PREFIX_PATH="$(realpath venv/lib)"
