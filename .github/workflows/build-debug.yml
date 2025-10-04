@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'PyTorch version (e.g., 2.7.0)'
+        description: 'PyTorch version (e.g., 2.8.0)'
         required: true
         default: ''
       run-on:
         description: 'Run on which OS?'
         required: true
-        default: 'macos-13'
+        default: 'macos-15-intel'
 
 jobs:
   debug_session:
